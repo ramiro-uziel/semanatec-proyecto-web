@@ -24,6 +24,25 @@ type AnimeResult = {
   airing: boolean;
 };
 
+const NoisePattern = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="100%"
+    height="100%"
+    className="fixed inset-0 z-[-1] opacity-[5%] mix-blend-difference"
+  >
+    <filter id="noiseFilter">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.65"
+        numOctaves="4"
+        stitchTiles="stitch"
+      />
+    </filter>
+    <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+  </svg>
+);
+
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [animeType, setAnimeType] = useState("tv");
@@ -66,32 +85,48 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
+    <div className="min-h-screen flex flex-col items-center p-4 overflow-hidden opacity-95 bg-stone-950 text-white">
+      <NoisePattern />
       <motion.div
         initial={false}
-        animate={hasSearched ? { y: 0 } : { y: "35vh" }}
+        animate={hasSearched ? { y: 0 } : { y: "30vh" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full max-w-xl my-10"
       >
-        <h1 className="text-3xl font-bold">Hola</h1>
-        <p className="text-xl font-extralight mb-5">
-          Busca un anime, y encuentra la fuente en MangaDex.
+        {!hasSearched && (
+          <h1 className="sm:text-3xl text-2xl font-black text-center">
+            JikanDex
+          </h1>
+        )}
+        <p className="sm:text-xl text-md font-medium mb-5 text-center">
+          Busca un anime y encuentra la fuente en{" "}
+          <a
+            href="https://www.mangadex.org"
+            className="font-bold text-orange-400 hover:text-orange-300 transition duration-200 ease-in-out"
+          >
+            MangaDex
+          </a>
+          .
         </p>
 
         <form onSubmit={handleSearch} className="w-full">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-            <div className="flex flex-row w-full justify-between bg-white border border-black border-dashed sm:rounded-r-none rounded-xl">
+          <div
+            className={`flex flex-col sm:flex-row gap-2 sm:gap-0 rounded-xl ${
+              hasSearched ? "" : "shadow-xl shadow-white/5"
+            }`}
+          >
+            <div className="flex flex-row w-full justify-between bg-transparent border border-white/50 sm:rounded-r-none rounded-xl">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nombre del anime"
-                className="p-4 outline-none w-full rounded-l-xl"
+                className="p-4 outline-none w-full rounded-l-xl bg-transparent placeholder-stone-500"
               />
               <select
                 value={animeType}
                 onChange={(e) => setAnimeType(e.target.value)}
-                className="max-w-18 w-min mr-2  outline-none sm:rounded-none rounded-xl"
+                className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent"
               >
                 <option value="tv">TV</option>
                 <option value="movie">Película</option>
@@ -99,7 +134,7 @@ export default function Home() {
             </div>
             <button
               type="submit"
-              className="border border-gray-800 bg-gray-800 text-white px-6 py-4 hover:bg-gray-600 hover:text-white transition duration-100 ease-in-out rounded-xl sm:rounded-l-none sm:rounded-r-xl w-full sm:w-[120px]"
+              className="border border-white/50 bg-transparent text-white px-6 py-4 hover:bg-stone-900 hover:text-white transition duration-100 ease-in-out rounded-xl sm:rounded-l-none sm:rounded-r-xl sm:border-l-0 w-full sm:w-[120px] "
               disabled={isLoading}
             >
               {isLoading ? "..." : "Buscar"}
@@ -119,20 +154,20 @@ export default function Home() {
             className="w-full max-w-2xl"
           >
             {animeResult && (
-              <div className="bg-white p-6 rounded-xl border border-black border-dashed">
+              <div className="bg-stone-950 p-6 rounded-xl border border-white/20  shadow-xl shadow-white/5 mb-5">
                 <h2 className="text-2xl font-bold">
                   {animeResult.title_english}
                 </h2>
-                <div className="flex flex-col  items-start mb-4">
+                <div className="flex flex-col items-start mb-4">
                   {animeResult.title_english !== animeResult.title && (
                     <h3 className="text-lg font-medium">{animeResult.title}</h3>
                   )}
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-stone-500">
                     {animeResult.title_japanese}
                   </p>
                 </div>
                 <div className="flex mb-4">
-                  <div className="w-1/3 mr-4 ">
+                  <div className="w-1/3 mr-4">
                     <Image
                       src={animeResult.images.jpg.image_url}
                       alt={animeResult.title}
@@ -140,6 +175,14 @@ export default function Home() {
                       height={300}
                       className="rounded-lg object-contain max-h-[300px]"
                     />
+                    <a
+                      href={animeResult.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3.5 w-full text-center inline-block text-blue-200 bg-blue-900 text-stone px-4 py-2 rounded-lg hover:bg-blue-800 hover:text-blue-50 transition duration-300 ease-in-out"
+                    >
+                      Ver en MyAnimeList
+                    </a>
                   </div>
                   <div className="w-2/3">
                     <p className="mb-2">
@@ -154,22 +197,14 @@ export default function Home() {
                       <strong>Status:</strong>{" "}
                       {animeResult.airing ? "En emisión" : "Terminado"}
                     </p>
-                    <div className="max-h-48 overflow-y-auto mb-4 pr-2">
+                    <div className="max-h-60 overflow-y-auto mb-4 pr-2">
                       <p>{animeResult.synopsis}</p>
                     </div>
-                    <a
-                      href={animeResult.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition duration-300 ease-in-out"
-                    >
-                      Ver en MyAnimeList
-                    </a>
                   </div>
                 </div>
                 {animeResult.source !== "Manga" &&
                   animeResult.source !== "Web manga" && (
-                    <p className="text-yellow-700 bg-yellow-300 p-3 rounded-lg mt-4">
+                    <p className="text-yellow-200 bg-yellow-700 p-3 rounded-lg mt-4">
                       <div className="flex items-center gap-2">
                         <FontAwesomeIcon icon={faWarning} className="fa-fw" />
                         No está basado en un manga.
@@ -177,7 +212,7 @@ export default function Home() {
                     </p>
                   )}
                 {animeResult.source == "Light novel" && (
-                  <p className="text-sky-700 bg-sky-300 p-3 rounded-lg mt-4">
+                  <p className="text-sky-200 bg-sky-700 p-3 rounded-lg mt-4">
                     <div className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faBook} className="fa-fw" />
                       <a
