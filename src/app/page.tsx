@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
 
 type AnimeResult = {
   mal_id: number;
@@ -110,20 +112,22 @@ export default function Home() {
                 <h2 className="text-2xl font-bold">
                   {animeResult.title_english}
                 </h2>
-                <div className="flex flex-row space-x-3 items-center mb-4">
-                  <h3 className="text-lg font-medium">{animeResult.title}</h3>
+                <div className="flex flex-col  items-start mb-4">
+                  {animeResult.title_english !== animeResult.title && (
+                    <h3 className="text-lg font-medium">{animeResult.title}</h3>
+                  )}
                   <p className="text-sm text-gray-600">
                     {animeResult.title_japanese}
                   </p>
                 </div>
                 <div className="flex mb-4">
-                  <div className="w-1/3 mr-4">
+                  <div className="w-1/3 mr-4 ">
                     <Image
                       src={animeResult.images.jpg.image_url}
                       alt={animeResult.title}
                       width={200}
                       height={300}
-                      className="rounded-lg"
+                      className="rounded-lg object-contain max-h-[300px]"
                     />
                   </div>
                   <div className="w-2/3">
@@ -137,7 +141,7 @@ export default function Home() {
                       <strong>Status:</strong>{" "}
                       {animeResult.airing ? "En emisión" : "Terminado"}
                     </p>
-                    <div className="h-40 overflow-y-auto mb-4 pr-2">
+                    <div className="max-h-48 overflow-y-auto mb-4 pr-2">
                       <p>{animeResult.synopsis}</p>
                     </div>
                     <a
@@ -152,10 +156,30 @@ export default function Home() {
                 </div>
                 {animeResult.source !== "Manga" &&
                   animeResult.source !== "Web manga" && (
-                    <p className="text-yellow-600 bg-yellow-100 p-3 rounded-lg mt-4">
-                      Este anime no está basado en un manga.
+                    <p className="text-yellow-700 bg-yellow-300 p-3 rounded-lg mt-4">
+                      <div className="flex items-center gap-2">
+                        <FontAwesomeIcon icon={faWarning} className="fa-fw" />
+                        No está basado en un manga.
+                      </div>
                     </p>
-                  )}{" "}
+                  )}
+                {animeResult.source == "Light novel" && (
+                  <p className="text-sky-700 bg-sky-300 p-3 rounded-lg mt-4">
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faBook} className="fa-fw" />
+                      <a
+                        href={`https://global.bookwalker.jp/search/?qcat=&word=${encodeURIComponent(
+                          animeResult.title_english
+                        )}&np=0&order=score`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline ml-2"
+                      >
+                        Su fuente es un Light novel.
+                      </a>
+                    </div>
+                  </p>
+                )}
               </div>
             )}
           </motion.div>
