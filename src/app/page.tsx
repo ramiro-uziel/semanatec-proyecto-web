@@ -1,25 +1,29 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-type AmazonProduct = {
-  price: {
-    value: number;
-  } | null;
-  isPrime: boolean;
-  mainImageUrl: string;
-  rating: number | null;
+type AnimeResult = {
+  mal_id: number;
   url: string;
+  images: {
+    jpg: {
+      image_url: string;
+    };
+  };
+  title: string;
+  title_japanese: string;
+  year: number;
+  synopsis: string;
+  episodes: number;
+  status: string;
+  source: string;
 };
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<AmazonProduct[]>([]);
-  const [sortOption, setSortOption] = useState<"price" | "rating">("rating");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [itemLimit, setItemLimit] = useState<number | "all">(3);
+  const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,91 +37,58 @@ export default function Home() {
     if (!hasSearched) setHasSearched(true);
 
     try {
-      const response = await fetch("/api/amazonSearch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ searchTerm }),
-      });
+      const response = await fetch(
+        `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(
+          searchTerm
+        )}&limit=1&sfw=true`
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error("Failed to fetch anime");
       }
 
       const data = await response.json();
-      setSearchResults(data);
+      if (data.data && data.data.length > 0) {
+        setAnimeResult(data.data[0]);
+      } else {
+        setError("No anime found");
+      }
     } catch (err) {
-      setError("Failed to fetch products. Please try again.");
+      setError("Failed to fetch anime. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const sortAmazonResults = (option: "price" | "rating") => {
-    setSortOption(option);
-    const sorted = [...filteredResults].sort((a, b) => {
-      if (option === "price") {
-        return sortDirection === "asc"
-          ? (a.price?.value ?? 0) - (b.price?.value ?? 0)
-          : (b.price?.value ?? 0) - (a.price?.value ?? 0);
-      }
-      return sortDirection === "asc"
-        ? (a.rating ?? 0) - (b.rating ?? 0)
-        : (b.rating ?? 0) - (a.rating ?? 0);
-    });
-    setSearchResults(sorted);
-  };
-
-  const toggleSortDirection = () => {
-    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    sortAmazonResults(sortOption);
-  };
-
-  const filteredResults = useMemo(() => {
-    const filtered = searchResults.filter(
-      (product) => product.price?.value != null && product.rating != null
-    );
-    return itemLimit === "all" ? filtered : filtered.slice(0, itemLimit);
-  }, [searchResults, itemLimit]);
-
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
       <motion.div
         initial={false}
-        animate={hasSearched ? { y: 0 } : { y: "40vh" }}
+        animate={hasSearched ? { y: 0 } : { y: "35vh" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="w-full max-w-4xl px-4 pt-8"
+        className="w-full max-w-xl my-10"
       >
-        <motion.p
-          className="text-2xl font-bold mb-8 text-center text-black"
-          initial={false}
-          animate={
-            hasSearched
-              ? { opacity: 0, height: 0, marginBottom: 0 }
-              : { opacity: 1, height: "auto", marginBottom: 32 }
-          }
-          transition={{ duration: 0.3 }}
-        >
-          Busca un producto
-        </motion.p>
+        <h1 className="text-3xl font-bold">Hola</h1>
+        <p className="text-xl font-extralight mb-5">
+          Busca un anime, y encuentra la fuente en MangaDex.
+        </p>
 
-        <form onSubmit={handleSearch} className="w-full max-w-xl mx-auto">
-          <div className="flex rounded-xl border-2 border-gray-400 overflow-hidden">
+        <form onSubmit={handleSearch} className="w-full">
+          <div className="flex ">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Enter product name"
-              className="p-4 outline-none w-full z-10"
+              placeholder="Nombre del anime"
+              className="flex-grow p-4 outline-none border border-dashed border-black rounded-l-xl"
             />
             <button
               type="submit"
-              className="bg-black text-white px-6 py-4 hover:bg-blue-700 transition duration-300 ease-in-out"
+              className="border border-gray-800 bg-gray-800 text-white px-6 py-4 hover:bg-gray-600 hover:text-white transition duration-100 ease-in-out rounded-r-xl w-[100px]"
               disabled={isLoading}
             >
-              {isLoading ? "Searching..." : "Search"}
+              {isLoading ? "..." : "Buscar"}
             </button>
           </div>
         </form>
@@ -130,95 +101,54 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             transition={{ delay: 0.2 }}
-            className="w-full max-w-4xl px-4 pt-8"
+            className="w-full max-w-2xl"
           >
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-            {filteredResults.length > 0 && (
-              <div className="mb-8">
-                <div className="flex flex-row justify-between items-center mb-4">
-                  <h2 className="text-2xl font-bold text-black">
-                    Resultados de Amazon
-                  </h2>
-                  <div className="flex space-x-4">
-                    <select
-                      value={sortOption}
-                      onChange={(e) =>
-                        sortAmazonResults(e.target.value as "price" | "rating")
-                      }
-                      className="p-2 border border-indigo-300 rounded-md bg-white text-blue-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            {animeResult && (
+              <div className="bg-white p-6 rounded-xl border border-black border-dashed">
+                <h2 className="text-2xl font-bold mb-2">{animeResult.title}</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  {animeResult.title_japanese}
+                </p>
+                <div className="flex mb-4">
+                  <div className="w-1/3 mr-4">
+                    <Image
+                      src={animeResult.images.jpg.image_url}
+                      alt={animeResult.title}
+                      width={200}
+                      height={300}
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <div className="w-2/3">
+                    <p className="mb-2">
+                      <strong>Year:</strong> {animeResult.year || "N/A"}
+                    </p>
+                    <p className="mb-2">
+                      <strong>Episodes:</strong> {animeResult.episodes}
+                    </p>
+                    <p className="mb-2">
+                      <strong>Status:</strong> {animeResult.status}
+                    </p>
+                    <div className="h-32 overflow-y-auto mb-4 pr-2">
+                      <p>{animeResult.synopsis}</p>
+                    </div>
+                    <a
+                      href={animeResult.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition duration-300 ease-in-out"
                     >
-                      <option value="rating">Ordenar por calificación</option>
-                      <option value="price">Ordenar por precio</option>
-                    </select>
-                    <button
-                      onClick={toggleSortDirection}
-                      className="p-2 border border-indigo-300 rounded-md bg-white text-blue-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {sortDirection === "asc" ? "▲" : "▼"}
-                    </button>
-                    <select
-                      value={itemLimit}
-                      onChange={(e) =>
-                        setItemLimit(
-                          e.target.value === "all"
-                            ? "all"
-                            : parseInt(e.target.value)
-                        )
-                      }
-                      className="p-2 border border-indigo-300 rounded-md bg-white text-blue-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value={3}>Mostrar 3</option>
-                      <option value={5}>Mostrar 5</option>
-                      <option value={10}>Mostrar 10</option>
-                      <option value="all">Mostrar todos</option>
-                    </select>
+                      View on MyAnimeList
+                    </a>
                   </div>
                 </div>
-                <ul className="space-y-4 mb-10">
-                  {filteredResults.map((product, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-white p-6 rounded-lg shadow-lg"
-                    >
-                      <div className="flex">
-                        <div className="relative w-32 h-32 mr-4">
-                          <Image
-                            src={product.mainImageUrl}
-                            alt="Product Image"
-                            fill
-                            style={{ objectFit: "cover" }}
-                            className="rounded-lg"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold mb-2 text-blue-600">
-                            ${product.price!.value.toFixed(2)}
-                          </p>
-                          <p className="text-sm mb-2">
-                            Rating: {product.rating!.toFixed(1)}
-                          </p>
-                          {product.isPrime && (
-                            <p className="text-sm mb-2 text-green-600">
-                              Prime Eligible
-                            </p>
-                          )}
-                          <a
-                            href={product.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-black text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition duration-300 ease-in-out"
-                          >
-                            Ver en Amazon
-                          </a>
-                        </div>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ul>
+                {animeResult.source !== "Manga" && (
+                  <p className="text-yellow-600 bg-yellow-100 p-3 rounded-lg mt-4">
+                    Este anime no está basado en un manga.
+                  </p>
+                )}
               </div>
             )}
           </motion.div>
