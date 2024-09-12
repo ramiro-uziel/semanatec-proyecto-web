@@ -26,6 +26,7 @@ type AnimeResult = {
 
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [animeType, setAnimeType] = useState("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ export default function Home() {
       const response = await fetch(
         `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(
           searchTerm
-        )}&limit=1&sfw=true`
+        )}&type=${animeType.toUpperCase()}&limit=1&sfw=true`
       );
 
       if (!response.ok) {
@@ -78,17 +79,27 @@ export default function Home() {
         </p>
 
         <form onSubmit={handleSearch} className="w-full">
-          <div className="flex ">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Nombre del anime"
-              className="flex-grow p-4 outline-none border border-dashed border-black rounded-l-xl"
-            />
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <div className="flex flex-row w-full justify-between bg-white border border-black border-dashed sm:rounded-r-none rounded-xl">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Nombre del anime"
+                className="p-4 outline-none w-full rounded-l-xl"
+              />
+              <select
+                value={animeType}
+                onChange={(e) => setAnimeType(e.target.value)}
+                className="max-w-18 w-min mr-2  outline-none sm:rounded-none rounded-xl"
+              >
+                <option value="tv">TV</option>
+                <option value="movie">Película</option>
+              </select>
+            </div>
             <button
               type="submit"
-              className="border border-gray-800 bg-gray-800 text-white px-6 py-4 hover:bg-gray-600 hover:text-white transition duration-100 ease-in-out rounded-r-xl w-[100px]"
+              className="border border-gray-800 bg-gray-800 text-white px-6 py-4 hover:bg-gray-600 hover:text-white transition duration-100 ease-in-out rounded-xl sm:rounded-l-none sm:rounded-r-xl w-full sm:w-[120px]"
               disabled={isLoading}
             >
               {isLoading ? "..." : "Buscar"}
@@ -134,9 +145,11 @@ export default function Home() {
                     <p className="mb-2">
                       <strong>Año:</strong> {animeResult.year || "N/A"}
                     </p>
-                    <p className="mb-2">
-                      <strong>Episodios:</strong> {animeResult.episodes}
-                    </p>
+                    {animeResult.episodes > 0 && (
+                      <p className="mb-2">
+                        <strong>Episodios:</strong> {animeResult.episodes}
+                      </p>
+                    )}
                     <p className="mb-2">
                       <strong>Status:</strong>{" "}
                       {animeResult.airing ? "En emisión" : "Terminado"}
