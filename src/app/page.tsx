@@ -24,6 +24,19 @@ type AnimeResult = {
   airing: boolean;
 };
 
+type MangaResult = {
+  id: string;
+  attributes: {
+    title: {
+      en: string;
+      ja: string;
+    };
+    description: string;
+    year: number;
+    status: string;
+  };
+};
+
 const NoisePattern = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -47,9 +60,28 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [animeType, setAnimeType] = useState("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
+  const [mangaResults, setMangaResults] = useState<MangaResult[]>([]); 
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const searchManga = async (animeTitle: string) => {
+    try {
+      const response = await fetch(
+        `https://api.mangadex.org/manga?title=${encodeURIComponent(animeTitle)}`
+      );
+      const data = await response.json();
+
+      if (data.data && data.data.length > 0) {
+        setMangaResults(data.data); 
+      } else {
+        setMangaResults([]);
+      }
+    } catch (error) {
+      console.error("Error buscando manga:", error);
+      setMangaResults([]);
+    }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +89,7 @@ export default function Home() {
 
     setIsLoading(true);
     setError(null);
+    setMangaResults([]); 
     if (!hasSearched) setHasSearched(true);
 
     try {
@@ -72,7 +105,10 @@ export default function Home() {
 
       const data = await response.json();
       if (data.data && data.data.length > 0) {
-        setAnimeResult(data.data[0]);
+        const anime = data.data[0];
+        setAnimeResult(anime);
+        
+        searchManga(anime.title);
       } else {
         setError("No se encontró ningún anime con ese nombre.");
       }
@@ -202,32 +238,36 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                {animeResult.source !== "Manga" &&
-                  animeResult.source !== "Web manga" && (
-                    <p className="text-yellow-200 bg-yellow-700 p-3 rounded-lg mt-4">
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon icon={faWarning} className="fa-fw" />
-                        No está basado en un manga.
-                      </div>
-                    </p>
-                  )}
-                {animeResult.source == "Light novel" && (
-                  <p className="text-sky-200 bg-sky-700 p-3 rounded-lg mt-4">
-                    <div className="flex items-center gap-2">
-                      <FontAwesomeIcon icon={faBook} className="fa-fw" />
-                      <a
-                        href={`https://global.bookwalker.jp/search/?qcat=&word=${encodeURIComponent(
-                          animeResult.title_english
-                        )}&np=0&order=score`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline ml-2"
+
+                <div>
+                  <h3 className="text-lg font-bold mb-2">Manga relacionado:</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {mangaResults.map((manga) => (
+                      <div
+                        key={manga.id}
+                        className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300"
                       >
-                        Su fuente es un Light novel.
-                      </a>
-                    </div>
-                  </p>
-                )}
+                        <h4 className="text-xl font-bold">
+                          {manga.attributes.title.en || manga.attributes.title.ja}
+                        </h4>
+                        <p className="text-sm text-stone-400">
+                          Año: {manga.attributes.year || "N/A"}
+                        </p>
+                        <p className="text-sm text-stone-400">
+                          Estado: {manga.attributes.status || "N/A"}
+                        </p>
+                        <a
+                          href={`https://mangadex.org/title/${manga.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-orange-400 underline mt-2 inline-block"
+                        >
+                          Leer en MangaDex
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
