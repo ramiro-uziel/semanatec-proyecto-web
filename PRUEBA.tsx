@@ -11,6 +11,7 @@ import {
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 type AnimeResult = {
   mal_id: number;
   url: string;
@@ -48,6 +49,21 @@ type MangaResult = {
   imageUrl: string;
 };
 
+type MangaFavoriteResult = {
+  id: string;
+  attributes: {
+    title: {
+      en: string;
+    };  
+    year: number;
+  };
+  relationships: {
+    id: string;
+    type : string;
+  }[];
+  imageUrl: string;
+};
+
 const NoisePattern: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -59,7 +75,7 @@ const NoisePattern: React.FC = () => (
       <feTurbulence
         type="fractalNoise"
         baseFrequency="0.65"
-        numOctaves="5"
+        numOctaves="4"
         stitchTiles="stitch"
       />
     </filter>
@@ -72,6 +88,7 @@ const Home: React.FC = () => {
   const [animeType, setAnimeType] = useState<"tv" | "movie">("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
   const [mangaResults, setMangaResults] = useState<MangaResult[]>([]);
+  const [mangaFavorites, setMangaFavorites] = useState<MangaFavoriteResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +102,7 @@ const Home: React.FC = () => {
       }
     }
   }, []);
-
+  
   const searchManga = useCallback(async (animeTitle: string) => {
     try {
       const response = await fetch(
@@ -145,23 +162,24 @@ const Home: React.FC = () => {
     }
   }, []);   
 
+  
   const handleSearch = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!searchTerm.trim()) return;
-
+      
       setIsLoading(true);
       setError(null);
       setMangaResults([]);
       setHasSearched(true);
-
+      
       try {
         const response = await fetch(
           `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(
             searchTerm
           )}&type=${animeType.toUpperCase()}&limit=1&sfw=true`
         );
-
+        
         if (!response.ok) {
           throw new Error("Failed to fetch anime");
         }
@@ -170,7 +188,7 @@ const Home: React.FC = () => {
         if (data.data && data.data.length > 0) {
           const anime = data.data[0];
           setAnimeResult(anime);
-
+          
           searchManga(anime.title);
         } else {
           setError("No se encontró ningún anime con ese nombre.");
@@ -184,13 +202,51 @@ const Home: React.FC = () => {
     },
     [searchTerm, animeType, searchManga]
   );
+  
+  const getFavoriteMangas = async () => {
+    if (typeof window !== "undefined") {
+      const storedFavorites = localStorage.getItem("favoriteMangas");
+  
+      if (storedFavorites) {
+        try {
+          // Parse the JSON string back into an array of Manga objects
+          const favoriteMangas = JSON.parse(storedFavorites);
+  
+          if (Array.isArray(favoriteMangas)) {
+            // Prepare an array to store the fetched manga details
+            const fetchedMangaDetails = [];
+  
+            // Iterate through each favorite manga and fetch its details
+            for (const favoriteManga of favoriteMangas) {
+              const response = await fetch(
+                `https://api.mangadex.org/title/${encodeURIComponent(favoriteManga.id)}`
+              );
+              const data = await response.json();
+  
+              if (data.data) {
+                fetchedMangaDetails.push(data.data); // Add fetched data to the array
+              }
+            }
+  
+            // Update state once with all fetched details
+            setMangaFavorites(fetchedMangaDetails);
+          }
+        } catch (error) {
+          console.error("Failed to fetch favorite mangas:", error);
+        }
+      }
+    }
+  
+    return []; // Return an empty array if no data is found or an error occurs
+  };
+  
 
   const addToFavoriteMangas = useCallback((id: string) => {
     setFavorites((prevFavorites) => {
       const updatedFavorites = prevFavorites.includes(id)
-        ? prevFavorites.filter((favId) => favId !== id)
-        : [...prevFavorites, id];
-
+      ? prevFavorites.filter((favId) => favId !== id)
+      : [...prevFavorites, id];
+      
       if (typeof window !== "undefined") {
         localStorage.setItem(
           "favoriteMangas",
@@ -209,8 +265,15 @@ const Home: React.FC = () => {
     [favorites]
   );
 
+  getFavoriteMangas();
+  
   return (
     <div className="min-h-screen flex flex-col items-center p-4 overflow-hidden opacity-95 bg-stone-950 text-white">
+      
+      
+      
+
+
       <NoisePattern />
       <motion.div
         initial={false}
@@ -218,6 +281,7 @@ const Home: React.FC = () => {
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="w-full max-w-xl my-10"
       >
+      
         {!hasSearched && (
           <h1 className="sm:text-3xl text-2xl font-black text-center">
             JikanDex
@@ -233,6 +297,7 @@ const Home: React.FC = () => {
           </a>
           .
         </p>
+
 
         <form onSubmit={handleSearch} className="w-full">
           <div
@@ -253,12 +318,8 @@ const Home: React.FC = () => {
                 onChange={(e) => setAnimeType(e.target.value as "tv" | "movie")}
                 className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent "
               >
-                <option value="tv" className="text-black">
-                  TV
-                </option>
-                <option value="movie" className="text-black">
-                  Película
-                </option>
+                <option value="tv" className="text-black">TV</option>
+                <option value="movie" className="text-black">Película</option>
               </select>
             </div>
             <button
