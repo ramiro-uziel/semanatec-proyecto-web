@@ -24,6 +24,24 @@ type AnimeResult = {
   airing: boolean;
 };
 
+type MangaResult = {
+  mal_id: number;
+  url: string;
+  images: {
+    jpg: {
+      image_url: string;
+    };
+  };
+  title: string;
+  title_english: string;
+  title_japanese: string;
+  year: number;
+  synopsis: string;
+  episodes: number;
+  source: string;
+  airing: boolean;
+};
+
 const NoisePattern = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -47,6 +65,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [animeType, setAnimeType] = useState("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
+  const [mangaResult, setMangaResult] = useState<MangaResult | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,8 +99,35 @@ export default function Home() {
       setError("Failed to fetch anime. Please try again.");
       console.error(err);
     } finally {
-      setIsLoading(false);
+      //setIsLoading(false); // set is loading se pondra false al final
     }
+
+    try {
+      if (animeResult) {
+        const response = await fetch( 
+          `https://api.mangadex.org/manga?q=${encodeURIComponent(
+            animeResult.title_english
+          )}&limit=5`
+        );
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch manga");
+        }
+  
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          setMangaResult(data.data[0]);
+        } else {
+          setError("No se encontró ningún manga con ese nombre.");
+        }
+      }
+    } catch (err) {
+      setError("Failed to fetch manga. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false); 
+    }
+
   };
 
   return (
