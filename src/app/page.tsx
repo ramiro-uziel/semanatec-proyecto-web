@@ -239,38 +239,46 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-lg font-bold mb-2">Manga relacionado:</h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    {mangaResults.map((manga) => (
-                      <div
-                        key={manga.id}
-                        className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300"
-                      >
-                        <h4 className="text-xl font-bold">
-                          {manga.attributes.title.en ||
-                            manga.attributes.title.ja ||
-                            manga.attributes.title["ja-ro"]}
-                        </h4>
-                        <p className="text-sm text-stone-400">
-                          Año: {manga.attributes.year || "N/A"}
-                        </p>
-                        <p className="text-sm text-stone-400">
-                          Estado: {manga.attributes.status || "N/A"}
-                        </p>
-                        <a
-                          href={`https://mangadex.org/title/${manga.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-orange-400 underline mt-2 inline-block"
+                {mangaResults.length >= 0 && (
+                  <div>
+                    <h3 className="text-lg font-bold mb-2">
+                      Manga relacionado:
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {mangaResults.map((manga) => (
+                        <div
+                          key={manga.id}
+                          className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300"
                         >
-                          Leer en MangaDex
-                        </a>
-                      </div>
-                    ))}
+                          <h4 className="text-xl font-bold">
+                            {manga.attributes.title.en ||
+                              manga.attributes.title.ja ||
+                              manga.attributes.title["ja-ro"]}
+                          </h4>
+                          <p className="text-sm text-stone-400">
+                            Año: {manga.attributes.year || "N/A"}
+                          </p>
+                          <p className="text-sm text-stone-400">
+                            Estado: {manga.attributes.status || "N/A"}
+                          </p>
+                          <a
+                            href={`https://mangadex.org/title/${manga.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-400 underline mt-2 inline-block"
+                          >
+                            Leer en MangaDex
+                          </a>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+                {mangaResults.length === 0 && (
+                  <p className="text-stone-500 text-left">
+                    No se encontraron mangas relacionados.
+                  </p>
+                )}
               </div>
             )}
           </motion.div>
