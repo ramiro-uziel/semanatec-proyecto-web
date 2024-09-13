@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
 
 type AnimeResult = {
   mal_id: number;
@@ -60,7 +60,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [animeType, setAnimeType] = useState("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
-  const [mangaResults, setMangaResults] = useState<MangaResult[]>([]); 
+  const [mangaResults, setMangaResults] = useState<MangaResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +73,7 @@ export default function Home() {
       const data = await response.json();
 
       if (data.data && data.data.length > 0) {
-        setMangaResults(data.data); 
+        setMangaResults(data.data);
       } else {
         setMangaResults([]);
       }
@@ -89,7 +89,7 @@ export default function Home() {
 
     setIsLoading(true);
     setError(null);
-    setMangaResults([]); 
+    setMangaResults([]);
     if (!hasSearched) setHasSearched(true);
 
     try {
@@ -107,7 +107,7 @@ export default function Home() {
       if (data.data && data.data.length > 0) {
         const anime = data.data[0];
         setAnimeResult(anime);
-        
+
         searchManga(anime.title);
       } else {
         setError("No se encontró ningún anime con ese nombre.");
@@ -248,7 +248,8 @@ export default function Home() {
                         className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300"
                       >
                         <h4 className="text-xl font-bold">
-                          {manga.attributes.title.en || manga.attributes.title.ja}
+                          {manga.attributes.title.en ||
+                            manga.attributes.title.ja}
                         </h4>
                         <p className="text-sm text-stone-400">
                           Año: {manga.attributes.year || "N/A"}
