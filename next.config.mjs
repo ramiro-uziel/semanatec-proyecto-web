@@ -9,7 +9,6 @@ const nextConfig = {
                 pathname: '/images/**',
             },
         ],
-        domains: ['uploads.mangadex.org'],
     },
 }
 

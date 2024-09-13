@@ -41,11 +41,6 @@ type MangaResult = {
     year: number;
     status: string;
   };
-  relationships: {
-    id: string;
-    type : string;
-  }[];
-  imageUrl: string;
 };
 
 const NoisePattern: React.FC = () => (
@@ -89,61 +84,20 @@ const Home: React.FC = () => {
   const searchManga = useCallback(async (animeTitle: string) => {
     try {
       const response = await fetch(
-        `https://api.mangadex.org/manga?title=${encodeURIComponent(animeTitle)}`
+        `/api/manga-search?title=${encodeURIComponent(animeTitle)}`
       );
       const data = await response.json();
 
       if (data.data && data.data.length > 0) {
         setMangaResults(data.data);
-
-
       } else {
         setMangaResults([]);
       }
-      
-      const mangasWithImages = await Promise.all(
-        data.data.map(async (manga : MangaResult) => {
-          const coverId = manga.relationships.find(
-            (rel) => rel.type === 'cover_art'
-          )?.id; // Find the cover ID from the relationships
-          
-          if (coverId) {
-            // Fetch the image URL
-            const imageUrl = await searchImageManga(coverId, manga.id);
-            return { ...manga, imageUrl }; // Add the imageUrl to the manga object
-          }
-          return { ...manga, imageUrl: null }; // Handle case where no cover is found
-        })
-      );
-      setMangaResults(mangasWithImages);
-
     } catch (error) {
       console.error("Error searching manga:", error);
       setMangaResults([]);
     }
-
-    
   }, []);
-
-  const searchImageManga = useCallback(async (coverId: string, mangaId: string) => {
-    try {
-      // Fetch the cover information for the given manga ID
-      const response = await fetch(`https://api.mangadex.org/cover/${encodeURIComponent(coverId)}`);
-      const data = await response.json();
-      
-      if (data.data && data.data.attributes && data.data.attributes.fileName) {
-        const baseUrl = 'https://uploads.mangadex.org/covers';
-        const imageUrl = `${baseUrl}/${mangaId}/${data.data.attributes.fileName}`;
-        return imageUrl; // Return or use the image URL as needed
-      } else {
-        console.warn('No cover image found for the provided ID');
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching manga image:', error);
-      return null;
-    }
-  }, []);   
 
   const handleSearch = useCallback(
     async (e: React.FormEvent) => {
@@ -367,57 +321,41 @@ const Home: React.FC = () => {
                       {mangaResults.map((manga) => (
                         <div
                           key={manga.id}
-                          className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300" //hover:bg-stone-700
+                          className="bg-stone-800 p-4 rounded-lg shadow-md hover:bg-stone-700 transition duration-300"
                         >
-                          <div className="flex  mb-4">
-                            <div className="w-1/3 mr-4">
-                              <Image
-                                src={manga.imageUrl}
-                                alt={manga.attributes.title.en}
-                                width={100}
-                                height={200}
-                                className="rounded-lg object-contain max-w-[300px] h-full "
-                              />
-                            </div>
-                            <div className="w-3/4 mr-4 flex flex-col">
-                              <h4 className="text-xl font-bold">
-                                {manga.attributes.title.en ||
-                                  manga.attributes.title.ja ||
-                                  manga.attributes.title["ja-ro"]}
-                              </h4>
-                              <p className="text-sm text-stone-400">
-                                Año: {manga.attributes.year || "N/A"}
-                              </p>
-                              <p className="text-sm text-stone-400 mb-2">
-                                Estado: {manga.attributes.status || "N/A"}
-                              </p>
-                              
-                              <p></p>
-                              <a
-                              href={`https://mangadex.org/title/${manga.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className=" mt-auto w-full text-center inline-block text-white bg-orange-900 text-stone px-4 py-2 rounded-lg hover:bg-orange-700 hover:text-white transition duration-300 ease-in-out"
-                              >
-                              Leer en MangaDex
-                              </a>
-                            </div>
-                            <div className="w-1/5 flex flex-col">
-                              <button
-                                className="mt-4 text-red-500 hover:text-red-600 focus:outline-none ml-1"
-                                onClick={() => addToFavoriteMangas(manga.id)}
-                              >
-                                <FontAwesomeIcon
-                                  icon={
-                                    isFavoriteMangas(manga.id)
-                                      ? faHeartSolid
-                                      : faHeartRegular
-                                  }
-                                  size="xl"
-                                />
-                              </button>   
-                            </div>
-                          </div>
+                          <h4 className="text-xl font-bold">
+                            {manga.attributes.title.en ||
+                              manga.attributes.title.ja ||
+                              manga.attributes.title["ja-ro"]}
+                          </h4>
+                          <p className="text-sm text-stone-400">
+                            Año: {manga.attributes.year || "N/A"}
+                          </p>
+                          <p className="text-sm text-stone-400">
+                            Estado: {manga.attributes.status || "N/A"}
+                          </p>
+                          <a
+                            href={`https://mangadex.org/title/${manga.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-orange-400 underline mt-2 inline-block"
+                          >
+                            Leer en MangaDex
+                          </a>
+                          <p></p>
+                          <button
+                            className="mt-4 text-red-500 hover:text-red-600 focus:outline-none"
+                            onClick={() => addToFavoriteMangas(manga.id)}
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                isFavoriteMangas(manga.id)
+                                  ? faHeartSolid
+                                  : faHeartRegular
+                              }
+                              size="lg"
+                            />
+                          </button>
                         </div>
                       ))}
                     </div>
