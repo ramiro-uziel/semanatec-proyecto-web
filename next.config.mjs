@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['via.placeholder.com', 'cdn.myanimelist.net'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'cdn.myanimelist.net',
+                port: '',
+                pathname: '/images/**',
+            },
+        ],
     },
 }
+
 export default nextConfig;

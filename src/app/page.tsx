@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons"; // Filled heart icon
-import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons"; // Unfilled heart icon
+import {
+  faHeart as faHeartSolid,
+  faBook,
+  faWarning,
+} from "@fortawesome/free-solid-svg-icons";
+import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
-
-
-import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
-
 
 type AnimeResult = {
   mal_id: number;
@@ -43,7 +43,7 @@ type MangaResult = {
   };
 };
 
-const NoisePattern = () => (
+const NoisePattern: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="100%"
@@ -62,21 +62,26 @@ const NoisePattern = () => (
   </svg>
 );
 
-export default function Home() {
+const Home: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [animeType, setAnimeType] = useState("tv");
+  const [animeType, setAnimeType] = useState<"tv" | "movie">("tv");
   const [animeResult, setAnimeResult] = useState<AnimeResult | null>(null);
   const [mangaResults, setMangaResults] = useState<MangaResult[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState(() => {
-    const storedFavoriteMangas = localStorage.getItem("favoriteMangas");
-    return storedFavoriteMangas ? JSON.parse(storedFavoriteMangas) : [];
-  });
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  
-  const searchManga = async (animeTitle: string) => {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedFavoriteMangas = localStorage.getItem("favoriteMangas");
+      if (storedFavoriteMangas) {
+        setFavorites(JSON.parse(storedFavoriteMangas));
+      }
+    }
+  }, []);
+
+  const searchManga = useCallback(async (animeTitle: string) => {
     try {
       const response = await fetch(
         `https://api.mangadex.org/manga?title=${encodeURIComponent(animeTitle)}`
@@ -89,76 +94,75 @@ export default function Home() {
         setMangaResults([]);
       }
     } catch (error) {
-      console.error("Error buscando manga:", error);
+      console.error("Error searching manga:", error);
       setMangaResults([]);
     }
-  };
-  
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
-    
-    setIsLoading(true);
-    setError(null);
-    setMangaResults([]);
-    if (!hasSearched) setHasSearched(true);
-    
-    try {
-      const response = await fetch(
-        `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(
-          searchTerm
-        )}&type=${animeType.toUpperCase()}&limit=1&sfw=true`
-      );
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch anime");
+  }, []);
+
+  const handleSearch = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!searchTerm.trim()) return;
+
+      setIsLoading(true);
+      setError(null);
+      setMangaResults([]);
+      setHasSearched(true);
+
+      try {
+        const response = await fetch(
+          `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(
+            searchTerm
+          )}&type=${animeType.toUpperCase()}&limit=1&sfw=true`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch anime");
+        }
+
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+          const anime = data.data[0];
+          setAnimeResult(anime);
+
+          searchManga(anime.title);
+        } else {
+          setError("No se encontró ningún anime con ese nombre.");
+        }
+      } catch (err) {
+        setError("Failed to fetch anime. Please try again.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
-      
-      const data = await response.json();
-      if (data.data && data.data.length > 0) {
-        const anime = data.data[0];
-        setAnimeResult(anime);
-        
-        searchManga(anime.title);
-      } else {
-        setError("No se encontró ningún anime con ese nombre.");
+    },
+    [searchTerm, animeType, searchManga]
+  );
+
+  const addToFavoriteMangas = useCallback((id: string) => {
+    setFavorites((prevFavorites) => {
+      const updatedFavorites = prevFavorites.includes(id)
+        ? prevFavorites.filter((favId) => favId !== id)
+        : [...prevFavorites, id];
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "favoriteMangas",
+          JSON.stringify(updatedFavorites)
+        );
       }
-    } catch (err) {
-      setError("Failed to fetch anime. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Function to add or remove manga from favorites
-  const addToFavoriteMangas = (id : string) => {
-    let updatedFavorites;
+      return updatedFavorites;
+    });
+  }, []);
 
-    if (favorites.includes(id)) {
-      // Remove from favorites
-      updatedFavorites = favorites.filter((favId : string) => favId !== id);
-    } else {
-      // Add to favorites
-      updatedFavorites = [...favorites, id];
-    }
+  const isFavoriteMangas = useCallback(
+    (id: string) => {
+      return favorites.includes(id);
+    },
+    [favorites]
+  );
 
-    setFavorites(updatedFavorites);
-    localStorage.setItem("favoriteMangas", JSON.stringify(updatedFavorites)); // Update local storage
-  };
-
-  // Check if the current manga is in the favorites list
-  const isFavoriteMangas = (id : string) => {
-
-    if (favorites.includes(id)) {
-      
-      return true;
-    } else {
-
-      return false;
-    }
-  };
-  
   return (
     <div className="min-h-screen flex flex-col items-center p-4 overflow-hidden opacity-95 bg-stone-950 text-white">
       <NoisePattern />
@@ -200,7 +204,7 @@ export default function Home() {
               />
               <select
                 value={animeType}
-                onChange={(e) => setAnimeType(e.target.value)}
+                onChange={(e) => setAnimeType(e.target.value as "tv" | "movie")}
                 className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent"
               >
                 <option value="tv">TV</option>
@@ -304,7 +308,7 @@ export default function Home() {
                     </div>
                   </p>
                 )}
-                {mangaResults.length >= 0 && (
+                {mangaResults.length > 0 && (
                   <div>
                     <h3 className="text-lg font-bold mb-2">
                       Manga relacionado:
@@ -335,8 +339,18 @@ export default function Home() {
                             Leer en MangaDex
                           </a>
                           <p></p>
-                          <button className="mt-4 text-red-500 hover:text-red-600 focus:outline-none"  onClick={() => addToFavoriteMangas(manga.id)}>
-                            <FontAwesomeIcon icon={isFavoriteMangas(manga.id) ? faHeartSolid : faHeartRegular} size="lg" />
+                          <button
+                            className="mt-4 text-red-500 hover:text-red-600 focus:outline-none"
+                            onClick={() => addToFavoriteMangas(manga.id)}
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                isFavoriteMangas(manga.id)
+                                  ? faHeartSolid
+                                  : faHeartRegular
+                              }
+                              size="lg"
+                            />
                           </button>
                         </div>
                       ))}
@@ -355,4 +369,6 @@ export default function Home() {
       </AnimatePresence>
     </div>
   );
-}
+};
+
+export default Home;
