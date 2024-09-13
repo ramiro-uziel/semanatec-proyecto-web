@@ -54,7 +54,7 @@ const NoisePattern: React.FC = () => (
       <feTurbulence
         type="fractalNoise"
         baseFrequency="0.65"
-        numOctaves="4"
+        numOctaves="5"
         stitchTiles="stitch"
       />
     </filter>
@@ -207,8 +207,12 @@ const Home: React.FC = () => {
                 onChange={(e) => setAnimeType(e.target.value as "tv" | "movie")}
                 className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent "
               >
-                <option value="tv" className="text-black">TV</option>
-                <option value="movie" className="text-black">Película</option>
+                <option value="tv" className="text-black">
+                  TV
+                </option>
+                <option value="movie" className="text-black">
+                  Película
+                </option>
               </select>
             </div>
             <button
