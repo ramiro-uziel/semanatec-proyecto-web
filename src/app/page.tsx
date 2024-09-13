@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBook } from "@fortawesome/free-solid-svg-icons";
 
 type AnimeResult = {
   mal_id: number;
@@ -239,6 +239,23 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                {animeResult.source == "Light novel" && (
+                  <p className="text-sky-200 bg-sky-700 p-3 rounded-lg my-4">
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon icon={faBook} className="fa-fw" />
+                      <a
+                        href={`https://global.bookwalker.jp/search/?qcat=&word=${encodeURIComponent(
+                          animeResult.title_english
+                        )}&np=0&order=score`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline ml-2"
+                      >
+                        Su fuente original es un Light novel.
+                      </a>
+                    </div>
+                  </p>
+                )}
                 {mangaResults.length >= 0 && (
                   <div>
                     <h3 className="text-lg font-bold mb-2">
