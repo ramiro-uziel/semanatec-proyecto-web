@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook } from "@fortawesome/free-solid-svg-icons";
+import { faBook, faWarning } from "@fortawesome/free-solid-svg-icons";
 
 type AnimeResult = {
   mal_id: number;
@@ -239,6 +239,16 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                {animeResult.source !== "Manga" &&
+                  animeResult.source !== "Web manga" &&
+                  animeResult.source !== "Light novel" && (
+                    <p className="text-yellow-200 bg-yellow-700 p-3 rounded-lg my-4">
+                      <div className="flex items-center gap-2">
+                        <FontAwesomeIcon icon={faWarning} className="fa-fw" />
+                        Su fuente original no es Manga.
+                      </div>
+                    </p>
+                  )}
                 {animeResult.source == "Light novel" && (
                   <p className="text-sky-200 bg-sky-700 p-3 rounded-lg my-4">
                     <div className="flex items-center gap-2">
