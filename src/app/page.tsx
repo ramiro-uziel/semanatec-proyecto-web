@@ -84,7 +84,7 @@ const Home: React.FC = () => {
   const searchManga = useCallback(async (animeTitle: string) => {
     try {
       const response = await fetch(
-        `https://api.mangadex.org/manga?title=${encodeURIComponent(animeTitle)}`
+        `/api/manga-search?title=${encodeURIComponent(animeTitle)}`
       );
       const data = await response.json();
 
