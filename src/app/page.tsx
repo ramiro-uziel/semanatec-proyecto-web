@@ -30,6 +30,7 @@ type MangaResult = {
     title: {
       en: string;
       ja: string;
+      "ja-ro": string;
     };
     description: string;
     year: number;
@@ -249,7 +250,8 @@ export default function Home() {
                       >
                         <h4 className="text-xl font-bold">
                           {manga.attributes.title.en ||
-                            manga.attributes.title.ja}
+                            manga.attributes.title.ja ||
+                            manga.attributes.title["ja-ro"]}
                         </h4>
                         <p className="text-sm text-stone-400">
                           Año: {manga.attributes.year || "N/A"}
