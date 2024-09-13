@@ -194,21 +194,21 @@ const Home: React.FC = () => {
               hasSearched ? "" : "shadow-xl shadow-white/5"
             }`}
           >
-            <div className="flex flex-row w-full justify-between bg-transparent border border-white/50 sm:rounded-r-none rounded-xl">
+            <div className=" flex flex-row w-full justify-between bg-transparent border border-white/50 sm:rounded-r-none rounded-xl">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Nombre del anime"
-                className="p-4 outline-none w-full rounded-l-xl bg-transparent placeholder-stone-500"
+                className="p-4 outline-none w-full rounded-l-xl bg-transparent placeholder-stone-500 "
               />
               <select
                 value={animeType}
                 onChange={(e) => setAnimeType(e.target.value as "tv" | "movie")}
-                className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent"
+                className="max-w-18 w-min mr-3 text-right outline-none sm:rounded-none rounded-xl bg-transparent "
               >
-                <option value="tv">TV</option>
-                <option value="movie">Película</option>
+                <option value="tv" className="text-black">TV</option>
+                <option value="movie" className="text-black">Película</option>
               </select>
             </div>
             <button
